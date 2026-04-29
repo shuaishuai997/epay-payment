@@ -106,7 +106,7 @@ func handleAdminPage(w http.ResponseWriter, r *http.Request) {
 		showError(w, "模板加载失败: "+err.Error())
 		return
 	}
-	tmpl.Execute(w, map[string]interface{}{"SiteName": cfg.SiteName})
+	tmpl.Execute(w, map[string]interface{}{"SiteName": getSiteName()})
 }
 
 // /admin/stats — 统计数据
@@ -254,7 +254,7 @@ func handleAdminCreateTestOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payURL := cfg.SiteURL + "/pay/" + tradeNo
+	payURL := getSiteURL() + "/pay/" + tradeNo
 	jsonResp(w, 200, "ok", map[string]interface{}{
 		"trade_no": tradeNo,
 		"pay_url":  payURL,
@@ -326,7 +326,7 @@ func handleAdminTestPay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 和 /submit.php 一样，跳转到支付页（不走网关，不通知商户）
-	http.Redirect(w, r, cfg.SiteURL+"/pay/"+order.TradeNo, http.StatusFound)
+	http.Redirect(w, r, getSiteURL()+"/pay/"+order.TradeNo, http.StatusFound)
 }
 
 // /admin/config — 获取配置
@@ -351,6 +351,8 @@ func handleAdminConfig(w http.ResponseWriter, r *http.Request) {
 		"wxpay_qrcode":  wxQR,
 		"alipay_qrcode": aliQR,
 		"qqpay_qrcode":  qqQR,
+		"site_name":     getSiteName(),
+		"site_url":      getSiteURL(),
 	})
 }
 
@@ -378,11 +380,15 @@ func handleAdminConfigSave(w http.ResponseWriter, r *http.Request) {
 	wxpay := r.PostForm.Get("wxpay_qrcode")
 	alipay := r.PostForm.Get("alipay_qrcode")
 	qqpay := r.PostForm.Get("qqpay_qrcode")
-	log.Printf("[ADMIN] 保存收款码: wx=%q ali=%q qq=%q", wxpay, alipay, qqpay)
+	siteName := r.PostForm.Get("site_name")
+	siteURL := r.PostForm.Get("site_url")
+	log.Printf("[ADMIN] 保存配置: wx=%q ali=%q qq=%q siteName=%q siteURL=%q", wxpay, alipay, qqpay, siteName, siteURL)
 	saveConfig("wxpay_qrcode", wxpay)
 	saveConfig("alipay_qrcode", alipay)
 	saveConfig("qqpay_qrcode", qqpay)
-	log.Printf("[ADMIN] 收款码配置已更新")
+	saveConfig("site_name", siteName)
+	saveConfig("site_url", siteURL)
+	log.Printf("[ADMIN] 配置已更新")
 	jsonResp(w, 200, "保存成功", nil)
 }
 

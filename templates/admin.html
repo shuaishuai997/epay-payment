@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -78,6 +78,10 @@ body{
 .dashboard{
     padding:24px;
     max-width:1200px;
+    max-height:calc(100vh - 56px);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
     margin:0 auto;
     position:relative;
     z-index:10;
@@ -166,11 +170,27 @@ body{
     border:1px solid rgba(0,210,255,0.2);
     overflow:hidden;
     backdrop-filter:blur(4px);
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    position:relative;
+}
+.table-header{
+    flex-shrink:0;
+    background:rgba(0,0,0,0.3);
+    border-bottom:1px solid rgba(0,210,255,0.2);
+    overflow-x:auto;
+}
+.table-body{
+    flex:1;
+    overflow:auto;
 }
 table{
     width:100%;
     border-collapse:collapse;
     font-size:14px;
+    min-width:100%;
 }
 th{
     background:rgba(0,0,0,0.3);
@@ -178,16 +198,23 @@ th{
     text-align:left;
     font-weight:500;
     color:#00d2ff;
-    border-bottom:1px solid rgba(0,210,255,0.2);
     white-space:nowrap;
+    position:sticky;
+    top:0;
 }
 td{
     padding:10px 16px;
     border-bottom:1px solid rgba(255,255,255,0.05);
     color:#eee;
+    white-space:nowrap;
 }
 tr:last-child td{border-bottom:none}
 tr:hover{background:rgba(0,210,255,0.05)}
+#orderTable{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
 
 /* 状态标签 */
 .badge{
@@ -237,14 +264,17 @@ tr:hover{background:rgba(0,210,255,0.05)}
 }
 .msg.success{background:rgba(0,228,116,0.1);color:#00e474}
 .msg.error{background:rgba(255,68,119,0.1);color:#ff4477}
-.loading{padding:40px;text-align:center;color:#888}
+.loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#888}
 
 /* 分页 */
 #pagination{
-    padding:16px;
+    padding:12px 16px;
     display:flex;
     justify-content:center;
     gap:8px;
+    background:rgba(10,15,35,0.9);
+    border-top:1px solid rgba(0,210,255,0.2);
+    flex-shrink:0;
 }
 #pagination button{
     padding:6px 12px;
@@ -287,10 +317,35 @@ tr:hover{background:rgba(0,210,255,0.05)}
     background:rgba(0,0,0,0.3);
     border:1px solid rgba(0,210,255,0.3);
     color:#fff;
+    width:100%;
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:14px;
+    outline:none;
+    transition:border-color 0.2s;
+}
+#cfgModal input:focus{
+    border-color:#00d2ff;
+    box-shadow:0 0 0 3px rgba(0,210,255,0.1);
 }
 #cfgModal button{
     background:linear-gradient(90deg,#00d2ff,#a0f);
     color:#fff;
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+    transition:opacity 0.2s, box-shadow 0.2s;
+}
+#cfgModal button:hover{
+    opacity:0.9;
+    box-shadow:0 0 10px rgba(0,210,255,0.4);
+}
+#cfgModal button:disabled{
+    background:#333;
+    cursor:not-allowed;
+    opacity:0.5;
 }
 </style>
 </head>
@@ -349,23 +404,31 @@ tr:hover{background:rgba(0,210,255,0.05)}
 
   <div class="table-wrap">
     <div class="loading" id="loadingText">加载中...</div>
-    <table id="orderTable" style="display:none">
-      <thead>
-        <tr>
-          <th>订单号</th>
-          <th>商户</th>
-          <th>外部订单</th>
-          <th>支付方式</th>
-          <th>商品名称</th>
-          <th>金额</th>
-          <th>状态</th>
-          <th>创建时间</th>
-          <th>支付时间</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="orderBody"></tbody>
-    </table>
+    <div id="orderTable" style="display:none">
+      <div class="table-header">
+        <table>
+          <thead>
+            <tr>
+              <th>订单号</th>
+              <th>商户</th>
+              <th>外部订单</th>
+              <th>支付方式</th>
+              <th>商品名称</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>创建时间</th>
+              <th>支付时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div class="table-body">
+        <table>
+          <tbody id="orderBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="pagination"></div>
@@ -377,13 +440,41 @@ tr:hover{background:rgba(0,210,255,0.05)}
 <div id="cfgModal">
   <div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <h2>⚙️ 收款码配置</h2>
+      <h2>⚙️ 系统配置</h2>
       <button onclick="closeConfigModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999">×</button>
     </div>
-    <p style="color:#aaa;font-size:13px;margin-bottom:20px">配置各支付方式收款码链接，保存后自动应用到支付页面</p>
+    <p style="color:#aaa;font-size:13px;margin-bottom:20px">配置网站基础信息和支付方式收款码</p>
 
-    <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(0,210,255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:600;color:#00d2ff;margin-bottom:10px">🔑 商户凭证</div>
+    <div style="display:flex;gap:20px">
+      <!-- 左侧：网站配置 -->
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:#00d2ff;margin-bottom:14px">🌐 网站配置</div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">🏠 网站名称</label>
+          <input type="text" id="cfg-site-name" placeholder="DevPay">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">🔗 网站URL</label>
+          <input type="text" id="cfg-site-url" placeholder="http://localhost:8080">
+        </div>
+      </div>
+
+      <!-- 右侧：支付配置 -->
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:#00d2ff;margin-bottom:14px">💳 支付配置</div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">💚 微信收款码链接</label>
+          <input type="text" id="cfg-wxpay" placeholder="https://qr.weixin.qq.com/xxx">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">💙 支付宝收款码链接</label>
+          <input type="text" id="cfg-alipay" placeholder="https://qr.alipay.com/xxx">
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(0,210,255,0.2);border-radius:10px;padding:14px 16px;margin-top:20px">
+      <div style="font-size:14px;font-weight:600;color:#00d2ff;margin-bottom:10px">🔑 商户凭证</div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:12px;color:#aaa">商户ID：</span>
         <span id="mch-pid" style="font-size:13px;color:#fff">—</span>
@@ -394,28 +485,6 @@ tr:hover{background:rgba(0,210,255,0.05)}
       </div>
       <button onclick="saveMerchantKey()" id="btn-save-key" style="margin-top:6px">保存密钥</button>
       <span id="mch-msg" style="margin-left:10px;font-size:12px"></span>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">💚 微信收款码链接</label>
-      <input type="text" id="cfg-wxpay" placeholder="https://qr.weixin.qq.com/xxx">
-    </div>
-    <div style="margin-bottom:16px">
-      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">💙 支付宝收款码链接</label>
-      <input type="text" id="cfg-alipay" placeholder="https://qr.alipay.com/xxx">
-    </div>
-    <div style="margin-bottom:20px">
-      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">🐧 QQ钱包收款码链接</label>
-      <input type="text" id="cfg-qqpay" placeholder="https://i.qpay.qq.com/xxx">
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">🔍 收款码预览测试</label>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="preview-url" placeholder="粘贴收款码链接" style="flex:1">
-        <button onclick="previewQR()">生成</button>
-      </div>
-      <div id="preview-result" style="margin-top:10px;text-align:center;min-height:40px"></div>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05)">
@@ -633,21 +702,24 @@ function loadConfig() {
     .then(r => r.json())
     .then(d => {
       if(d.code === 200 && d.data) {
+        document.getElementById('cfg-site-name').value = d.data.site_name || '';
+        document.getElementById('cfg-site-url').value = d.data.site_url || '';
         document.getElementById('cfg-wxpay').value = d.data.wxpay_qrcode || '';
         document.getElementById('cfg-alipay').value = d.data.alipay_qrcode || '';
-        document.getElementById('cfg-qqpay').value = d.data.qqpay_qrcode || '';
       }
     });
 }
 function saveConfig() {
+  const siteName = document.getElementById('cfg-site-name').value.trim();
+  const siteURL = document.getElementById('cfg-site-url').value.trim();
   const wxpay = document.getElementById('cfg-wxpay').value.trim();
   const alipay = document.getElementById('cfg-alipay').value.trim();
-  const qqpay = document.getElementById('cfg-qqpay').value.trim();
   const msg = document.getElementById('config-msg');
   const fd = new FormData();
+  fd.append('site_name', siteName);
+  fd.append('site_url', siteURL);
   fd.append('wxpay_qrcode', wxpay);
   fd.append('alipay_qrcode', alipay);
-  fd.append('qqpay_qrcode', qqpay);
 
   fetch('/admin/config/save', {method:'POST', body:fd})
     .then(r => r.json())
@@ -683,12 +755,6 @@ function saveMerchantKey() {
       btn.disabled = false; btn.textContent = '保存密钥';
       setTimeout(() => msg.textContent = '', 3000);
     });
-}
-function previewQR() {
-  const url = document.getElementById('preview-url').value.trim();
-  const res = document.getElementById('preview-result');
-  if(!url) { res.innerHTML = '请输入收款码链接'; return; }
-  res.innerHTML = '✅ 链接格式验证通过';
 }
 function showConfig() {
   document.getElementById('cfgModal').style.display = 'flex';

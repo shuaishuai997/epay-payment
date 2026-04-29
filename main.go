@@ -65,7 +65,7 @@ func main() {
 	http.HandleFunc("/admin/merchant/save", handleAdminMerchantSave)
 	http.HandleFunc("/admin/debug-config", handleDebugConfig)
 
-	log.Printf("支付平台启动: %s", cfg.SiteURL)
+	log.Printf("支付平台启动: %s", getSiteURL())
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
@@ -79,7 +79,7 @@ func loadConfig() *Config {
 		DBUser:        "root",
 		DBPassword:    "root",
 		DBName:        "payment",
-		WxpayQRCode:   "wxp://xxx",
+		WxpayQRCode:   "wxp://f2f0ohCffMdq-GPHNL5Wb7qykZEaGaeUTQrgX3CEKkoN6yOmsVybmAuuyhlhb-Q5qDVp",
 		AlipayQRCode:  "https://qr.alipay.com/xxx",
 		QQpayQRCode:   "https://i.qpay.qq.com/xxx",
 		AdminUser:     "admin",
@@ -91,6 +91,22 @@ func getPaymentConfig(key string) string {
 	var val string
 	db.QueryRow("SELECT cfg_value FROM payment_config WHERE cfg_key = ?", key).Scan(&val)
 	return val
+}
+
+func getSiteName() string {
+	val := getPaymentConfig("site_name")
+	if val != "" {
+		return val
+	}
+	return cfg.SiteName
+}
+
+func getSiteURL() string {
+	val := getPaymentConfig("site_url")
+	if val != "" {
+		return val
+	}
+	return cfg.SiteURL
 }
 
 func (c *Config) getQRCode(t string) string {
@@ -247,6 +263,8 @@ func initDB(c *Config) error {
 	if c.QQpayQRCode != "" {
 		db.Exec(`INSERT IGNORE INTO payment_config (cfg_key, cfg_value) VALUES (?, ?)`, "qqpay_qrcode", c.QQpayQRCode)
 	}
+	db.Exec(`INSERT IGNORE INTO payment_config (cfg_key, cfg_value) VALUES (?, ?)`, "site_name", c.SiteName)
+	db.Exec(`INSERT IGNORE INTO payment_config (cfg_key, cfg_value) VALUES (?, ?)`, "site_url", c.SiteURL)
 
 	db.Exec("INSERT IGNORE INTO merchants (pid, name, `key`) VALUES (?, ?, ?)",
 		"1001", "默认商户", c.Key)
@@ -499,7 +517,7 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, exist.ReturnURL, http.StatusFound)
 			return
 		}
-		http.Redirect(w, r, cfg.SiteURL+"/pay/"+exist.TradeNo, http.StatusFound)
+		http.Redirect(w, r, getSiteURL()+"/pay/"+exist.TradeNo, http.StatusFound)
 		return
 	}
 
@@ -514,7 +532,7 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, cfg.SiteURL+"/pay/"+order.TradeNo, http.StatusFound)
+	http.Redirect(w, r, getSiteURL()+"/pay/"+order.TradeNo, http.StatusFound)
 }
 
 func handlePayPage(w http.ResponseWriter, r *http.Request) {
@@ -563,7 +581,7 @@ func handlePayPage(w http.ResponseWriter, r *http.Request) {
 		"PayTypeIcon": getPayTypeIcon(order.Type),
 		"QRBase64":    qrBase64,
 		"QRError":     qrError,
-		"SiteName":    cfg.SiteName,
+		"SiteName":    getSiteName(),
 	}
 
 	tmpl, err := template.ParseFiles("templates/pay.html")
