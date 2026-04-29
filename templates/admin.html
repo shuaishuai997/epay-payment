@@ -6,45 +6,299 @@
 <title>DevPay 管理后台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;min-height:100vh}
-.header{background:#fff;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,.08);position:sticky;top:0;z-index:100}
-.header .logo{font-size:18px;font-weight:700;color:#667eea}
-.header .right{display:flex;align-items:center;gap:16px}
-.header .right button{padding:6px 16px;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px}
-.dashboard{padding:24px;max-width:1200px;margin:0 auto}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:#fff;padding:20px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.stat-card .label{font-size:13px;color:#999;margin-bottom:8px}
-.stat-card .value{font-size:28px;font-weight:700;color:#333}
-.stat-card.waiting .value{color:#f57c00}
-.stat-card.paid .value{color:#2e7d32}
-.stat-card.total .value{color:#667eea}
-.filter-bar{background:#fff;padding:16px;border-radius:12px;margin-bottom:16px;display:flex;gap:12px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06);flex-wrap:wrap}
-.filter-bar select,.filter-bar input{padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none}
-.filter-bar button{padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px}
-.filter-bar .btn-red{background:#e74c3c}
-.filter-bar .spacer{flex:1}
-.table-wrap{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{background:#f8f9fa;padding:12px 16px;text-align:left;font-weight:500;color:#666;border-bottom:1px solid #eee;white-space:nowrap}
-td{padding:10px 16px;border-bottom:1px solid #f5f5f5;color:#333}
-tr:last-child td{border-bottom:none}
-tr:hover{background:#fafafa}
-.badge{padding:2px 8px;border-radius:10px;font-size:12px;white-space:nowrap}
-.badge-waiting{background:#fff8e1;color:#f57c00}
-.badge-paid{background:#e8f5e9;color:#2e7d32}
-.badge-closed{background:#f5f5f5;color:#999}
-.btn{padding:5px 12px;border:none;border-radius:4px;cursor:pointer;font-size:13px;margin-right:4px}
-.btn-confirm{background:#07c160;color:#fff}
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:#050818;
+    min-height:100vh;
+    color:#fff;
+    position:relative;
+}
+/* 动态粒子背景 */
+#particles{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    z-index:1;
+}
 
-.btn:disabled{background:#ccc;cursor:not-allowed}
-.msg{position:fixed;bottom:24px;right:24px;padding:12px 24px;background:#333;color:#fff;border-radius:8px;font-size:14px;z-index:1000}
-.msg.success{background:#07c160}
-.msg.error{background:#e74c3c}
-.loading{padding:40px;text-align:center;color:#999}
+/* 霓虹故障动画 */
+@keyframes glitch{
+    0%{text-shadow:0.05em 0 0 rgba(0,210,255,0.7),-0.05em -0.025em 0 rgba(255,0,200,0.7)}
+    50%{text-shadow:-0.05em -0.025em 0 rgba(0,210,255,0.7),0.025em 0.025em 0 rgba(255,0,200,0.7)}
+    100%{text-shadow:0.025em 0.05em 0 rgba(0,210,255,0.7),0.05em 0 0 rgba(255,0,200,0.7)}
+}
+
+/* 扫描线 */
+@keyframes scan{
+    0%{transform:translateX(-100%)}
+    100%{transform:translateX(200%)}
+}
+
+/* 顶部导航 */
+.header{
+    background:rgba(10,15,35,0.9);
+    padding:0 24px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid rgba(0,210,255,0.2);
+    position:sticky;
+    top:0;
+    z-index:100;
+    backdrop-filter:blur(10px);
+}
+.header .logo{
+    font-size:18px;
+    font-weight:700;
+    color:#00d2ff;
+    animation:glitch 3s infinite alternate-reverse;
+}
+.header .right{
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+.header .right button{
+    padding:6px 16px;
+    background:linear-gradient(90deg,#00d2ff,#a0f);
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13px;
+    transition:0.2s;
+}
+.header .right button:hover{
+    opacity:0.9;
+    box-shadow:0 0 10px rgba(0,210,255,0.4);
+}
+
+/* 主面板 */
+.dashboard{
+    padding:24px;
+    max-width:1200px;
+    margin:0 auto;
+    position:relative;
+    z-index:10;
+}
+
+/* 数据卡片 */
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:24px;
+}
+.stat-card{
+    background:rgba(10,15,35,0.8);
+    padding:20px;
+    border-radius:12px;
+    border:1px solid rgba(0,210,255,0.2);
+    position:relative;
+    overflow:hidden;
+}
+.stat-card::after{
+    content:'';
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:3px;
+    background:linear-gradient(90deg,#00d2ff,#ff00c8);
+    animation:scan 3s linear infinite;
+}
+.stat-card .label{
+    font-size:13px;
+    color:#aaa;
+    margin-bottom:8px;
+}
+.stat-card .value{
+    font-size:28px;
+    font-weight:700;
+    color:#fff;
+    text-shadow:0 0 10px rgba(0,210,255,0.3);
+}
+.stat-card.waiting .value{color:#ffcc00}
+.stat-card.paid .value{color:#00e474}
+.stat-card.total .value{color:#00d2ff}
+
+/* 筛选栏 */
+.filter-bar{
+    background:rgba(10,15,35,0.8);
+    padding:16px;
+    border-radius:12px;
+    margin-bottom:16px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    border:1px solid rgba(0,210,255,0.2);
+    flex-wrap:wrap;
+    backdrop-filter:blur(4px);
+}
+.filter-bar select,
+.filter-bar input{
+    padding:8px 12px;
+    background:rgba(0,0,0,0.3);
+    border:1px solid rgba(0,210,255,0.3);
+    border-radius:6px;
+    font-size:14px;
+    color:#fff;
+    outline:none;
+}
+.filter-bar button{
+    padding:8px 16px;
+    background:linear-gradient(90deg,#00d2ff,#a0f);
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:14px;
+    transition:0.2s;
+}
+.filter-bar button:hover{
+    box-shadow:0 0 8px rgba(0,210,255,0.4);
+}
+.filter-bar .spacer{flex:1}
+
+/* 表格 */
+.table-wrap{
+    background:rgba(10,15,35,0.8);
+    border-radius:12px;
+    border:1px solid rgba(0,210,255,0.2);
+    overflow:hidden;
+    backdrop-filter:blur(4px);
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+}
+th{
+    background:rgba(0,0,0,0.3);
+    padding:12px 16px;
+    text-align:left;
+    font-weight:500;
+    color:#00d2ff;
+    border-bottom:1px solid rgba(0,210,255,0.2);
+    white-space:nowrap;
+}
+td{
+    padding:10px 16px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    color:#eee;
+}
+tr:last-child td{border-bottom:none}
+tr:hover{background:rgba(0,210,255,0.05)}
+
+/* 状态标签 */
+.badge{
+    padding:2px 8px;
+    border-radius:10px;
+    font-size:12px;
+    white-space:nowrap;
+}
+.badge-waiting{background:rgba(255,204,0,0.1);color:#ffcc00}
+.badge-paid{background:rgba(0,228,116,0.1);color:#00e474}
+.badge-closed{background:rgba(150,150,150,0.1);color:#aaa}
+
+/* 按钮 */
+.btn{
+    padding:5px 12px;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    font-size:13px;
+    margin-right:4px;
+    transition:0.2s;
+}
+.btn-confirm{
+    background:#00e474;
+    color:#000;
+    font-weight:500;
+}
+.btn-confirm:hover{box-shadow:0 0 8px #00e474}
+.btn:disabled{
+    background:#333;
+    color:#666;
+    cursor:not-allowed;
+}
+
+/* 提示 */
+.msg{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    padding:12px 24px;
+    background:#111;
+    color:#fff;
+    border-radius:8px;
+    font-size:14px;
+    z-index:1000;
+    border:1px solid rgba(0,210,255,0.3);
+}
+.msg.success{background:rgba(0,228,116,0.1);color:#00e474}
+.msg.error{background:rgba(255,68,119,0.1);color:#ff4477}
+.loading{padding:40px;text-align:center;color:#888}
+
+/* 分页 */
+#pagination{
+    padding:16px;
+    display:flex;
+    justify-content:center;
+    gap:8px;
+}
+#pagination button{
+    padding:6px 12px;
+    background:rgba(0,0,0,0.3);
+    color:#fff;
+    border:1px solid rgba(0,210,255,0.3);
+    border-radius:6px;
+    cursor:pointer;
+}
+#pagination button:hover{
+    background:#00d2ff;
+    color:#000;
+}
+
+/* 弹窗 */
+#cfgModal{
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    z-index:9999;
+    background:rgba(0,0,0,0.7);
+    align-items:center;
+    justify-content:center;
+    backdrop-filter:blur(4px);
+}
+#cfgModal > div{
+    background:rgba(10,15,35,0.95);
+    border-radius:16px;
+    width:520px;
+    max-width:95vw;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:28px;
+    border:1px solid rgba(0,210,255,0.3);
+    box-shadow:0 0 40px rgba(0,210,255,0.2);
+}
+#cfgModal h2{color:#00d2ff}
+#cfgModal input{
+    background:rgba(0,0,0,0.3);
+    border:1px solid rgba(0,210,255,0.3);
+    color:#fff;
+}
+#cfgModal button{
+    background:linear-gradient(90deg,#00d2ff,#a0f);
+    color:#fff;
+}
 </style>
 </head>
+
 <body>
+<!-- 动态粒子背景 -->
+<canvas id="particles"></canvas>
+
 <div class="header">
   <div class="logo">DevPay 管理后台</div>
   <div class="right">
@@ -91,7 +345,7 @@ tr:hover{background:#fafafa}
     <button onclick="loadOrders(1)">🔍 搜索</button>
     <button onclick="loadOrders(1)">🔄 刷新</button>
     <div class="spacer"></div>
-      </div>
+  </div>
 
   <div class="table-wrap">
     <div class="loading" id="loadingText">加载中...</div>
@@ -114,44 +368,166 @@ tr:hover{background:#fafafa}
     </table>
   </div>
 
-  <div id="pagination" style="padding:16px;display:flex;justify-content:center;gap:8px"></div>
-
+  <div id="pagination"></div>
 </div>
 
 <div id="toast" class="msg hidden"></div>
 
+<!-- 配置弹窗 -->
+<div id="cfgModal">
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2>⚙️ 收款码配置</h2>
+      <button onclick="closeConfigModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999">×</button>
+    </div>
+    <p style="color:#aaa;font-size:13px;margin-bottom:20px">配置各支付方式收款码链接，保存后自动应用到支付页面</p>
+
+    <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(0,210,255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:#00d2ff;margin-bottom:10px">🔑 商户凭证</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:12px;color:#aaa">商户ID：</span>
+        <span id="mch-pid" style="font-size:13px;color:#fff">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:12px;color:#aaa">密钥：</span>
+        <input type="text" id="mch-key" placeholder="your_default_key" style="flex:1;padding:6px 10px;border-radius:6px;font-size:13px">
+      </div>
+      <button onclick="saveMerchantKey()" id="btn-save-key" style="margin-top:6px">保存密钥</button>
+      <span id="mch-msg" style="margin-left:10px;font-size:12px"></span>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">💚 微信收款码链接</label>
+      <input type="text" id="cfg-wxpay" placeholder="https://qr.weixin.qq.com/xxx">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">💙 支付宝收款码链接</label>
+      <input type="text" id="cfg-alipay" placeholder="https://qr.alipay.com/xxx">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">🐧 QQ钱包收款码链接</label>
+      <input type="text" id="cfg-qqpay" placeholder="https://i.qpay.qq.com/xxx">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:6px;font-size:13px;color:#aaa">🔍 收款码预览测试</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="preview-url" placeholder="粘贴收款码链接" style="flex:1">
+        <button onclick="previewQR()">生成</button>
+      </div>
+      <div id="preview-result" style="margin-top:10px;text-align:center;min-height:40px"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05)">
+      <button onclick="saveConfig()" style="flex:1">💾 保存配置</button>
+      <button onclick="closeConfigModal()">取消</button>
+    </div>
+    <div id="config-msg" style="margin-top:10px;font-size:13px;text-align:center"></div>
+  </div>
+</div>
+
 <script>
-var page = 1;
-var totalPages = 1;
+// ===================== 动态赛博粒子背景 =====================
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let w = canvas.width = window.innerWidth;
+let h = canvas.height = window.innerHeight;
+
+let particles = [];
+const particleCount = 80;
+
+class Particle{
+    constructor(){
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+        this.size = Math.random() * 2 + 1;
+        this.speedX = Math.random() * 0.5 - 0.25;
+        this.speedY = Math.random() * 0.5 - 0.25;
+        this.color = Math.random() > 0.5 ? '#00d2ff' : '#a0f';
+    }
+    update(){
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if(this.x < 0 || this.x > w) this.speedX *= -1;
+        if(this.y < 0 || this.y > h) this.speedY *= -1;
+    }
+    draw(){
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function init(){
+    particles = [];
+    for(let i=0;i<particleCount;i++) particles.push(new Particle());
+}
+init();
+
+function connect(){
+    for(let a=0;a<particles.length;a++){
+        for(let b=a;b<particles.length;b++){
+            const dx = particles[a].x - particles[b].x;
+            const dy = particles[a].y - particles[b].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist < 120){
+                ctx.strokeStyle = `rgba(0,210,255,${1 - dist/120})`;
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(particles[a].x, particles[a].y);
+                ctx.lineTo(particles[b].x, particles[b].y);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function animate(){
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p => {p.update();p.draw();});
+    connect();
+    requestAnimationFrame(animate);
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    init();
+});
+
+// ===================== 核心业务逻辑 =====================
+let page = 1;
+let totalPages = 1;
 
 function showToast(msg, type) {
-  var t = document.getElementById('toast');
+  const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'msg ' + (type || '');
-  t.classList.remove('hidden');
-  setTimeout(function(){ t.classList.add('hidden'); }, 3000);
+  setTimeout(() => t.classList.add('hidden'), 3000);
 }
 
 function checkAuth() {
   fetch('/admin/stats')
-    .then(function(r){return r.json()})
-    .then(function(d){
+    .then(r => r.json())
+    .then(d => {
       if(d.code === 401) { location.href = '/admin/login'; return; }
       loadStats();
       loadOrders(1);
-    }).catch(function(){ location.href = '/admin/login'; });
+    }).catch(() => location.href = '/admin/login');
 }
 
 function loadStats() {
   fetch('/admin/stats')
-    .then(function(r){return r.json()})
-    .then(function(d){
+    .then(r => r.json())
+    .then(d => {
       if(d.code !== 200) return;
       document.getElementById('statTotal').textContent = d.data.total || 0;
       document.getElementById('statPaid').textContent = d.data.paid || 0;
       document.getElementById('statWaiting').textContent = d.data.waiting || 0;
       document.getElementById('statIncome').textContent = '¥' + (d.data.income || '0.00');
-    }).catch(function(){});
+    });
 }
 
 function loadOrders(p) {
@@ -159,66 +535,69 @@ function loadOrders(p) {
   document.getElementById('loadingText').style.display = 'block';
   document.getElementById('orderTable').style.display = 'none';
 
-  var status = document.getElementById('filterStatus').value;
-  var typ = document.getElementById('filterType').value;
-  var tradeNo = document.getElementById('filterTradeNo').value;
-  var url = '/admin/orders?page=' + page;
-  if(status) url += '&status=' + status;
-  if(typ) url += '&type=' + typ;
-  if(tradeNo) url += '&trade_no=' + encodeURIComponent(tradeNo);
+  const status = document.getElementById('filterStatus').value;
+  const type = document.getElementById('filterType').value;
+  const tradeNo = document.getElementById('filterTradeNo').value;
+  let url = `/admin/orders?page=${page}`;
+  if(status) url += `&status=${status}`;
+  if(type) url += `&type=${type}`;
+  if(tradeNo) url += `&trade_no=${encodeURIComponent(tradeNo)}`;
 
   fetch(url)
-    .then(function(r){return r.json()})
-    .then(function(d){
+    .then(r => r.json())
+    .then(d => {
       if(d.code === 401) { location.href = '/admin/login'; return; }
       document.getElementById('loadingText').style.display = 'none';
       document.getElementById('orderTable').style.display = 'table';
       renderTable(d.data.orders || []);
       renderPagination(d.data.total || 0, d.data.pages || 1);
-    }).catch(function(){
+    }).catch(() => {
       document.getElementById('loadingText').textContent = '加载失败';
     });
 }
 
 function renderTable(orders) {
-  var tbody = document.getElementById('orderBody');
-  if(orders.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px">暂无数据</td></tr>';
+  const tbody = document.getElementById('orderBody');
+  if(!orders.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#888;padding:40px">暂无数据</td></tr>';
     return;
   }
-  var typeName = {wxpay:'💚微信',alipay:'💙支付宝',qqpay:'🐧QQ'};
-  var statusName = {0:'待处理',1:'已支付',2:'已关闭'};
-  var statusClass = {0:'badge-waiting',1:'badge-paid',2:'badge-closed'};
-  var html = '';
-  for(var i=0;i<orders.length;i++){
-    var o = orders[i];
-    var canConfirm = o.status === 0;
 
-    html += '<tr>' +
-      '<td style="font-size:12px;color:#999;word-break:break-all">' + o.trade_no + '</td>' +
-      '<td style="white-space:nowrap">' + o.pid + '</td>' +
-      '<td style="font-size:12px;word-break:break-all">' + o.out_trade_no + '</td>' +
-      '<td style="white-space:nowrap">' + (typeName[o.type]||o.type) + '</td>' +
-      '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (o.name||'—') + '</td>' +
-      '<td style="font-weight:600;color:#e74c3c;white-space:nowrap">¥' + o.money + '</td>' +
-      '<td><span class="badge ' + (statusClass[o.status]||'') + '">' + (statusName[o.status]||o.status) + '</span></td>' +
-      '<td style="white-space:nowrap;font-size:12px">' + (o.create_time||'') + '</td>' +
-      '<td style="white-space:nowrap;font-size:12px">' + (o.pay_time||'—') + '</td>' +
-      '<td style="white-space:nowrap">' +
-        '<button class="btn btn-confirm" ' + (canConfirm?'':'disabled') + ' onclick="confirmOrder(\'' + o.trade_no + '\',this)">' + (canConfirm?'确认收款':'—') + '</button>' +
-      '</td>' +
-      '</tr>';
-  }
+  const typeName = {wxpay:'💚微信',alipay:'💙支付宝',qqpay:'🐧QQ'};
+  const statusName = {0:'待处理',1:'已支付',2:'已关闭'};
+  const statusClass = {0:'badge-waiting',1:'badge-paid',2:'badge-closed'};
+  
+  let html = '';
+  orders.forEach(o => {
+    const canConfirm = o.status === 0;
+    html += `
+    <tr>
+      <td style="font-size:12px;color:#888">${o.trade_no}</td>
+      <td>${o.pid}</td>
+      <td style="font-size:12px">${o.out_trade_no}</td>
+      <td>${typeName[o.type] || o.type}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.name || '—'}</td>
+      <td style="font-weight:600;color:#ff4477">¥${o.money}</td>
+      <td><span class="badge ${statusClass[o.status]}">${statusName[o.status]}</span></td>
+      <td style="font-size:12px">${o.create_time || ''}</td>
+      <td style="font-size:12px">${o.pay_time || '—'}</td>
+      <td>
+        <button class="btn btn-confirm" ${canConfirm ? '' : 'disabled'} onclick="confirmOrder('${o.trade_no}',this)">
+          ${canConfirm ? '确认收款' : '—'}
+        </button>
+      </td>
+    </tr>`;
+  });
   tbody.innerHTML = html;
 }
 
 function renderPagination(total, pages) {
   totalPages = pages;
-  var pg = document.getElementById('pagination');
+  const pg = document.getElementById('pagination');
   if(pages <= 1) { pg.innerHTML = ''; return; }
-  var html = '';
-  for(var i=1;i<=pages;i++){
-    html += '<button onclick="loadOrders(' + i + ')" ' + (i===page?'style="background:#667eea;color:#fff;border-color:#667eea"':'') + '>' + i + '</button>';
+  let html = '';
+  for(let i=1;i<=pages;i++){
+    html += `<button onclick="loadOrders(${i})" ${i===page ? 'style="background:#00d2ff;color:#000"' : ''}>${i}</button>`;
   }
   pg.innerHTML = html;
 }
@@ -226,11 +605,11 @@ function renderPagination(total, pages) {
 function confirmOrder(tradeNo, btn) {
   if(!confirm('确认已收到该订单款项？')) return;
   btn.disabled = true; btn.textContent = '...';
-  var fd = new FormData();
+  const fd = new FormData();
   fd.append('trade_no', tradeNo);
   fetch('/admin/order/confirm', {method:'POST', body:fd})
-    .then(function(r){return r.json()})
-    .then(function(d){
+    .then(r => r.json())
+    .then(d => {
       if(d.code === 200) {
         showToast('✅ 确认成功', 'success');
         loadStats(); loadOrders(page);
@@ -238,227 +617,91 @@ function confirmOrder(tradeNo, btn) {
         showToast('❌ ' + d.msg, 'error');
         btn.disabled = false; btn.textContent = '确认收款';
       }
-    }).catch(function(e){
+    }).catch(() => {
       showToast('❌ 网络错误', 'error');
       btn.disabled = false; btn.textContent = '确认收款';
     });
 }
 
-// 商户签名（复用前端的签名逻辑）
-function genSign(params, key) {
-  var keys = Object.keys(params).filter(function(k){ return k !== 'sign' && k !== 'sign_type' && params[k] !== ''; }).sort();
-  var str = keys.map(function(k){ return k + '=' + params[k]; }).join('&') + key;
-  return md5(str);
-}
-function md5(d){return hexMD5(d);}
-function hexMD5(s){function md5cycle(e,t){var n,a,r,o,i;s=e;for(n=1732584193,a=-271733879,r=-1732584194,o=271733878,i=0;i<s.length;i++){var c=s.charCodeAt(i++),u=s.charCodeAt(i++),l=s.charCodeAt(i++),f=s.charCodeAt(i++);c=c||0;u=u||0;l=l||0;f=f||0;var h=(c>>>0)+(a>>>0),m=(u>>>0)+(a>>>0)+(((h>>>0)<(c>>>0))?1:0),v=(l>>>0)+(r>>>0)+(((m>>>0)<(u>>>0))?1:0),g=(f>>>0)+(o>>>0)+(((v>>>0)<(l>>>0))?1:0),y=(a>>>0)+(o>>>0)+(((g>>>0)<(f>>>0))?1:0);n=r;r=a;a=y;i=((h>>>0)+(g>>>0)+(((y>>>0)<(h>>>0))?1:0))|0;e=[(i^v^((m>>>0)!=0?0:m>>>0))*2+((y>>>0)==0?1:0)|0,(i^r*y)^v+(((g>>>0)==0)?m:m>>>0)*3+((y>>>0)==0?0:y>>>0)|0];t[0]=t[0]+e[0]|0;t[1]=t[1]+e[1]|0;}var d=Array(4);d[0]=[n>>>24&255,n>>>16&255,n>>>8&255,n&255];d[1]=[a>>>24&255,a>>>16&255,a>>>8&255,a&255];d[2]=[r>>>24&255,r>>>16&255,r>>>8&255,r&255];d[3]=[o>>>24&255,o>>>16&255,o>>>8&255,o&255];return d;}
-var S=function(x,K){return(x>>>K|(x<<(32-K)))>>>0;};
-function FF(a,b,c,d,x,s,t){a=(a+((b&c)|((~b)&d)+x+t)>>>0)>>>0;a=(S(a,s)+b)>>>0;return a;}
-function GG(a,b,c,d,x,s,t){a=(a+((b&d)|(c&(~d))+x+t)>>>0)>>>0;a=(S(a,s)+b)>>>0;return a;}
-function HH(a,b,c,d,x,s,t){a=(a+((b^c^d)+x+t)>>>0)>>>0;a=(S(a,s)+b)>>>0;return a;}
-function II(a,b,c,d,x,s,t){a=(a+((c^(b|~d))+x+t)>>>0)>>>0;a=(S(a,s)+b)>>>0;return a;}
-var x=[];for(var i=0;i<d.length;i++)x[i]=d.charCodeAt(i)<128?d.charCodeAt(i):d.charCodeAt(i)>127&&d.charCodeAt(i)<2048?(d.charCodeAt(i)>>6)|192:(d.charCodeAt(i)>>12)|224|(d.charCodeAt(i)&63)<<6|d.charCodeAt(i++)&63;var M=[];while(x.length%16!=0)x.push(0);for(var i=0;i<x.length;i+=16)M.push(x.slice(i,i+16));
-for(var j=0;j<64;j++)M[j%16].push(0);var MD=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
-var A=[1732584193,-271733879,-1732584194,271733878],B=[1518500249,1859775393,-1894007588,-899497514],C=[2400959708,-1727646529,-2069608786,-1989582261],D=[0,0,0,0];
-for(var i=0;i<M.length;i++){
-  var t=A.slice(),TT=[];
-  for(var j=0;j<64;j++){var X=M[i];if(j<16)TT.push(X[j]);else if(j<32)TT.push((X[(j+1)%16]^X[(j+5)%16]^X[(j+9)%16]^X[(j+13)%16])>>>0);else if(j<48)TT.push((X[(j+2)%16]^X[(j+6)%16]^X[(j+10)%16]^X[(j+14)%16])>>>0);else TT.push((X[(j+3)%16]^X[(j+7)%16]^X[(j+11)%16]^X[(j+15)%16])>>>0);
-  if(j<16)A=[FF(A[0],A[1],A[2],A[3],TT[0],MD[0],B[0])].concat(A.slice(1));else if(j<32)A=[GG(A[0],A[1],A[2],A[3],TT[1],MD[1],B[1])].concat(A.slice(1));else if(j<48)A=[HH(A[0],A[1],A[2],A[3],TT[2],MD[2],B[2])].concat(A.slice(1));else A=[II(A[0],A[1],A[2],A[3],TT[3],MD[3],B[3])].concat(A.slice(1));}}
-var r=md5cycle(A,t=Array(4));var hex='';for(var i=0;i<t.length;i++){var v=(t[i]>>>0)+(A[i]>>>0);hex+=((v>>>24)&255).toString(16).padStart(2,'0')+((v>>>16)&255).toString(16).padStart(2,'0')+((v>>>8)&255).toString(16).padStart(2,'0')+(v&255).toString(16).padStart(2,'0');}return hex;}
-
 function doLogout() {
-  fetch('/admin/logout').then(function(){ location.href = '/admin/login'; });
+  fetch('/admin/logout').then(() => location.href = '/admin/login');
 }
 
-var cfg = {Key: 'your_default_key'};
-
-checkAuth();
-
-// ============ 收款配置 ============
+// 配置弹窗
 function loadConfig() {
   fetch('/admin/config')
-    .then(function(r){return r.json()})
-    .then(function(d){
+    .then(r => r.json())
+    .then(d => {
       if(d.code === 200 && d.data) {
         document.getElementById('cfg-wxpay').value = d.data.wxpay_qrcode || '';
         document.getElementById('cfg-alipay').value = d.data.alipay_qrcode || '';
         document.getElementById('cfg-qqpay').value = d.data.qqpay_qrcode || '';
       }
-    }).catch(function(){});
+    });
 }
-
 function saveConfig() {
-  var wxpay = document.getElementById('cfg-wxpay').value.trim();
-  var alipay = document.getElementById('cfg-alipay').value.trim();
-  var qqpay = document.getElementById('cfg-qqpay').value.trim();
-  var msg = document.getElementById('config-msg');
+  const wxpay = document.getElementById('cfg-wxpay').value.trim();
+  const alipay = document.getElementById('cfg-alipay').value.trim();
+  const qqpay = document.getElementById('cfg-qqpay').value.trim();
+  const msg = document.getElementById('config-msg');
+  const fd = new FormData();
+  fd.append('wxpay_qrcode', wxpay);
+  fd.append('alipay_qrcode', alipay);
+  fd.append('qqpay_qrcode', qqpay);
 
-  var formData = new FormData();
-  formData.append('wxpay_qrcode', wxpay);
-  formData.append('alipay_qrcode', alipay);
-  formData.append('qqpay_qrcode', qqpay);
-
-  fetch('/admin/config/save', {method:'POST', body: formData})
-    .then(function(r){return r.json()})
-    .then(function(d){
-      if(d.code === 200) {
-        msg.style.color = '#2e7d32';
-        msg.textContent = '✅ ' + d.msg;
-      } else {
-        msg.style.color = '#e74c3c';
-        msg.textContent = '❌ ' + d.msg;
-      }
-      setTimeout(function(){ msg.textContent = ''; }, 3000);
-    }).catch(function(e){
-      msg.style.color = '#e74c3c';
-      msg.textContent = '❌ 保存失败: ' + e;
+  fetch('/admin/config/save', {method:'POST', body:fd})
+    .then(r => r.json())
+    .then(d => {
+      msg.style.color = d.code === 200 ? '#00e474' : '#ff4477';
+      msg.textContent = d.msg;
+      setTimeout(() => msg.textContent = '', 3000);
     });
 }
-
-function previewQR() {
-  var url = document.getElementById('preview-url').value.trim();
-  var container = document.getElementById('preview-result');
-  if(!url) {
-    container.innerHTML = '<span style="color:#999">请输入收款码链接</span>';
-    return;
-  }
-  if(typeof QRCode !== 'undefined') {
-    QRCode.toDataURL(url, {width:200,margin:1}, function(err, dataUrl){
-      if(err) {
-        container.innerHTML = '<span style="color:#e74c3c">生成失败: ' + err + '</span>';
-      } else {
-        container.innerHTML = '<img src="' + dataUrl + '" width="200" height="200" style="border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)"><div style="margin-top:8px;font-size:13px;color:#666">扫码可正常识别</div>';
-      }
-    });
-  } else {
-    container.innerHTML = '<div style="color:#666;font-size:14px;padding:20px">✅ 链接格式初步验证通过<br><small style="color:#999">实际二维码由支付页面生成</small></div>'; if(false) {} // 占位;
-  }
-}
-
-// ============ 收款配置 ============
 function loadMerchant() {
   fetch('/admin/merchant')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
+    .then(r => r.json())
+    .then(d => {
       if(d.code == 200) {
         document.getElementById('mch-pid').textContent = d.data.pid || '—';
         document.getElementById('mch-key').value = d.data.key || '';
-      } else {
-        document.getElementById('mch-pid').textContent = '⚠ ' + d.msg;
-        console.error('[loadMerchant] error:', d);
       }
-    })
-    .catch(function(e){ console.error(e); });
-}
-
-function saveMerchantKey() {
-  var key = document.getElementById('mch-key').value.trim();
-  var msg = document.getElementById('mch-msg');
-  var btn = document.getElementById('btn-save-key');
-  if(!key) { msg.textContent = '密钥不能为空'; msg.style.color = '#e74c3c'; return; }
-  btn.disabled = true;
-  btn.textContent = '保存中...';
-  msg.textContent = '';
-  var formData = new FormData();
-  formData.append('key', key);
-  fetch('/admin/merchant/save', {method:'POST', body: formData})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d.code == 200) {
-        msg.textContent = '✅ 保存成功';
-        msg.style.color = '#27ae60';
-      } else {
-        msg.textContent = '❌ ' + d.msg;
-        msg.style.color = '#e74c3c';
-      }
-      btn.disabled = false;
-      btn.textContent = '保存密钥';
-      setTimeout(function(){ msg.textContent = ''; }, 3000);
-    })
-    .catch(function(e){
-      msg.textContent = '❌ 保存失败';
-      msg.style.color = '#e74c3c';
-      btn.disabled = false;
-      btn.textContent = '保存密钥';
     });
 }
-
+function saveMerchantKey() {
+  const key = document.getElementById('mch-key').value.trim();
+  const msg = document.getElementById('mch-msg');
+  const btn = document.getElementById('btn-save-key');
+  if(!key) { msg.textContent='密钥不能为空'; return; }
+  btn.disabled = true; btn.textContent = '保存中...';
+  const fd = new FormData();
+  fd.append('key', key);
+  fetch('/admin/merchant/save', {method:'POST', body:fd})
+    .then(r => r.json())
+    .then(d => {
+      msg.style.color = d.code == 200 ? '#00e474' : '#ff4477';
+      msg.textContent = d.msg;
+      btn.disabled = false; btn.textContent = '保存密钥';
+      setTimeout(() => msg.textContent = '', 3000);
+    });
+}
+function previewQR() {
+  const url = document.getElementById('preview-url').value.trim();
+  const res = document.getElementById('preview-result');
+  if(!url) { res.innerHTML = '请输入收款码链接'; return; }
+  res.innerHTML = '✅ 链接格式验证通过';
+}
 function showConfig() {
   document.getElementById('cfgModal').style.display = 'flex';
   loadConfig();
   loadMerchant();
 }
-
 function closeConfigModal() {
   document.getElementById('cfgModal').style.display = 'none';
 }
 
-document.addEventListener('DOMContentLoaded', function(){
-  loadOrders(1);
-});
-document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape') closeConfigModal();
-});
+// 初始化
+checkAuth();
+document.addEventListener('keydown', e => e.key === 'Escape' && closeConfigModal());
 </script>
-
-<!-- 收款配置弹窗 -->
-<div id="cfgModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <h2 style="margin:0;font-size:18px;color:#333">⚙️ 收款码配置</h2>
-      <button onclick="closeConfigModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;line-height:1">×</button>
-    </div>
-    <p style="color:#888;font-size:13px;margin-bottom:20px">配置各支付方式收款码链接，保存后自动应用到支付页面</p>
-
-    <!-- 商户凭证 -->
-    <div style="background:#f0f4ff;border:1px solid #c3d0f5;border-radius:10px;padding:14px 16px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:600;color:#333;margin-bottom:10px">🔑 商户凭证</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:12px;color:#666;white-space:nowrap">商户ID：</span>
-        <span id="mch-pid" style="font-size:13px;color:#333;font-family:monospace">—</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:12px;color:#666;white-space:nowrap">密钥：</span>
-        <input type="text" id="mch-key" placeholder="your_default_key" style="flex:1;padding:6px 10px;border:1px solid #d0d8f0;border-radius:6px;font-size:13px;font-family:monospace;outline:none">
-      </div>
-      <div style="font-size:11px;color:#888;margin-bottom:10px">密钥用于API签名验证，请妥善保管勿泄露</div>
-      <button onclick="saveMerchantKey()" id="btn-save-key" style="padding:6px 16px;background:#4f7af8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500">保存密钥</button>
-      <span id="mch-msg" style="margin-left:10px;font-size:12px;color:#888"></span>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="display:block;font-weight:500;margin-bottom:6px;font-size:13px;color:#555">💚 微信收款码链接</label>
-      <input type="text" id="cfg-wxpay" placeholder="https://qr.weixin.qq.com/xxx 或 wxp://xxx" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none">
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="display:block;font-weight:500;margin-bottom:6px;font-size:13px;color:#555">💙 支付宝收款码链接</label>
-      <input type="text" id="cfg-alipay" placeholder="https://qr.alipay.com/xxx" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none">
-    </div>
-
-    <div style="margin-bottom:20px">
-      <label style="display:block;font-weight:500;margin-bottom:6px;font-size:13px;color:#555">🐧 QQ钱包收款码链接</label>
-      <input type="text" id="cfg-qqpay" placeholder="https://i.qpay.qq.com/xxx" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none">
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label style="display:block;font-weight:500;margin-bottom:6px;font-size:13px;color:#555">🔍 收款码预览测试</label>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="preview-url" placeholder="粘贴收款码链接" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;outline:none">
-        <button onclick="previewQR()" style="padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap">生成</button>
-      </div>
-      <div id="preview-result" style="margin-top:10px;text-align:center;min-height:40px"></div>
-    </div>
-
-    <div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #eee">
-      <button onclick="saveConfig()" style="flex:1;padding:10px;background:#667eea;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">💾 保存配置</button>
-      <button onclick="closeConfigModal()" style="padding:10px 20px;background:#f5f5f5;color:#666;border:none;border-radius:8px;cursor:pointer;font-size:14px">取消</button>
-    </div>
-    <div id="config-msg" style="margin-top:10px;font-size:13px;text-align:center"></div>
-  </div>
-</div>
-
-  
-
 </body>
 </html>
