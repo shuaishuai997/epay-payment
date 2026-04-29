@@ -336,9 +336,57 @@ function previewQR() {
 }
 
 // ============ 收款配置 ============
+function loadMerchant() {
+  fetch('/admin/merchant')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.code == 200) {
+        document.getElementById('mch-pid').textContent = d.data.pid || '—';
+        document.getElementById('mch-key').value = d.data.key || '';
+      } else {
+        document.getElementById('mch-pid').textContent = '⚠ ' + d.msg;
+        console.error('[loadMerchant] error:', d);
+      }
+    })
+    .catch(function(e){ console.error(e); });
+}
+
+function saveMerchantKey() {
+  var key = document.getElementById('mch-key').value.trim();
+  var msg = document.getElementById('mch-msg');
+  var btn = document.getElementById('btn-save-key');
+  if(!key) { msg.textContent = '密钥不能为空'; msg.style.color = '#e74c3c'; return; }
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+  msg.textContent = '';
+  var formData = new FormData();
+  formData.append('key', key);
+  fetch('/admin/merchant/save', {method:'POST', body: formData})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.code == 200) {
+        msg.textContent = '✅ 保存成功';
+        msg.style.color = '#27ae60';
+      } else {
+        msg.textContent = '❌ ' + d.msg;
+        msg.style.color = '#e74c3c';
+      }
+      btn.disabled = false;
+      btn.textContent = '保存密钥';
+      setTimeout(function(){ msg.textContent = ''; }, 3000);
+    })
+    .catch(function(e){
+      msg.textContent = '❌ 保存失败';
+      msg.style.color = '#e74c3c';
+      btn.disabled = false;
+      btn.textContent = '保存密钥';
+    });
+}
+
 function showConfig() {
   document.getElementById('cfgModal').style.display = 'flex';
   loadConfig();
+  loadMerchant();
 }
 
 function closeConfigModal() {
@@ -361,6 +409,22 @@ document.addEventListener('keydown', function(e){
       <button onclick="closeConfigModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;line-height:1">×</button>
     </div>
     <p style="color:#888;font-size:13px;margin-bottom:20px">配置各支付方式收款码链接，保存后自动应用到支付页面</p>
+
+    <!-- 商户凭证 -->
+    <div style="background:#f0f4ff;border:1px solid #c3d0f5;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:#333;margin-bottom:10px">🔑 商户凭证</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:12px;color:#666;white-space:nowrap">商户ID：</span>
+        <span id="mch-pid" style="font-size:13px;color:#333;font-family:monospace">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:12px;color:#666;white-space:nowrap">密钥：</span>
+        <input type="text" id="mch-key" placeholder="your_default_key" style="flex:1;padding:6px 10px;border:1px solid #d0d8f0;border-radius:6px;font-size:13px;font-family:monospace;outline:none">
+      </div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">密钥用于API签名验证，请妥善保管勿泄露</div>
+      <button onclick="saveMerchantKey()" id="btn-save-key" style="padding:6px 16px;background:#4f7af8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500">保存密钥</button>
+      <span id="mch-msg" style="margin-left:10px;font-size:12px;color:#888"></span>
+    </div>
 
     <div style="margin-bottom:16px">
       <label style="display:block;font-weight:500;margin-bottom:6px;font-size:13px;color:#555">💚 微信收款码链接</label>

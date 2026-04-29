@@ -385,3 +385,52 @@ func handleAdminConfigSave(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[ADMIN] 收款码配置已更新")
 	jsonResp(w, 200, "保存成功", nil)
 }
+
+// /admin/merchant — 获取商户凭证
+func handleAdminMerchant(w http.ResponseWriter, r *http.Request) {
+	if !getAdminSession(r) {
+		jsonResp(w, 401, "未登录", nil)
+		return
+	}
+	merchant, err := getMerchant("1001")
+	if err != nil {
+		jsonResp(w, 500, "获取商户信息失败: "+err.Error(), nil)
+		return
+	}
+	jsonResp(w, 200, "ok", map[string]interface{}{
+		"pid":  merchant.PID,
+		"name": merchant.Name,
+		"key":  merchant.Key,
+	})
+}
+
+func handleAdminMerchantSave(w http.ResponseWriter, r *http.Request) {
+	if !getAdminSession(r) {
+		jsonResp(w, 401, "未登录", nil)
+		return
+	}
+
+	// ✅ 关键修复：必须用 ParseMultipartForm 解析 FormData
+	// 不能用 ParseForm()
+	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10MB限制
+		jsonResp(w, 400, "参数解析失败", err.Error())
+		return
+	}
+
+	// ✅ 获取方式不变（兼容两种表单）
+	newKey := strings.TrimSpace(r.FormValue("key"))
+
+	if newKey == "" {
+		jsonResp(w, 400, "密钥不能为空", nil)
+		return
+	}
+	if len(newKey) < 8 {
+		jsonResp(w, 400, "密钥长度至少8位", nil)
+		return
+	}
+
+	// 执行更新
+	db.Exec("UPDATE merchants SET `key` = ? WHERE pid = ?", newKey, "1001")
+	log.Printf("[ADMIN] 商户密钥已更新: %s", newKey) // 日志可看到key，方便调试
+	jsonResp(w, 200, "保存成功", nil)
+}

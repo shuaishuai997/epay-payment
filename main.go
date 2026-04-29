@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"encoding/base64"
 	"strings"
 	"time"
 
@@ -61,6 +61,8 @@ func main() {
 	http.HandleFunc("/admin/order/test-pay", handleAdminTestPay)
 	http.HandleFunc("/admin/config", handleAdminConfig)
 	http.HandleFunc("/admin/config/save", handleAdminConfigSave)
+	http.HandleFunc("/admin/merchant", handleAdminMerchant)
+	http.HandleFunc("/admin/merchant/save", handleAdminMerchantSave)
 	http.HandleFunc("/admin/debug-config", handleDebugConfig)
 
 	log.Printf("支付平台启动: %s", cfg.SiteURL)
@@ -246,7 +248,7 @@ func initDB(c *Config) error {
 		db.Exec(`INSERT IGNORE INTO payment_config (cfg_key, cfg_value) VALUES (?, ?)`, "qqpay_qrcode", c.QQpayQRCode)
 	}
 
-	db.Exec(`INSERT IGNORE INTO merchants (pid, name, key) VALUES (?, ?, ?)`,
+	db.Exec("INSERT IGNORE INTO merchants (pid, name, `key`) VALUES (?, ?, ?)",
 		"1001", "默认商户", c.Key)
 
 	return nil
@@ -254,7 +256,7 @@ func initDB(c *Config) error {
 
 func getMerchant(pid string) (*Merchant, error) {
 	m := &Merchant{}
-	err := db.QueryRow("SELECT id, pid, name, key, status, balance FROM merchants WHERE pid = ?", pid).
+	err := db.QueryRow("SELECT id, pid, name, `key`, status, balance FROM merchants WHERE pid = ?", pid).
 		Scan(&m.ID, &m.PID, &m.Name, &m.Key, &m.Status, &m.Balance)
 	return m, err
 }
@@ -381,7 +383,7 @@ func getClientIP(r *http.Request) string {
 
 func genTradeNo() string {
 	now := time.Now()
-	return fmt.Sprintf("EP%s%04d", now.Format("20060102150405"), now.Nanosecond()/100000)
+	return fmt.Sprintf("SP%s%04d", now.Format("20060102150405"), now.Nanosecond()/100000)
 }
 
 func getPayTypeName(t string) string {
