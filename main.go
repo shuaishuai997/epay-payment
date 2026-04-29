@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -16,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/skip2/go-qrcode"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -73,7 +73,7 @@ func loadConfig() *Config {
 	return &Config{
 		SiteName:      "DevPay",
 		SiteURL:       "http://localhost:8080",
-		Key:           "your_default_key",
+		Key:           "fanshuai11",
 		DBHost:        "localhost",
 		DBPort:        3306,
 		DBUser:        "root",
@@ -341,32 +341,45 @@ func getReturnURLByOut(outTradeNo, pid string, out *string) {
 	db.QueryRow("SELECT return_url FROM orders WHERE out_trade_no = ? AND pid = ?", outTradeNo, pid).Scan(out)
 }
 
-func generateSign(params map[string]string, key string) string {
-	keys := make([]string, 0, len(params))
-	for k := range params {
-		if k != "sign" && k != "sign_type" && params[k] != "" {
-			keys = append(keys, k)
-		}
+// CreateUrlString 生成待签名字符串, ["a", "b", "c"], ["d", "e", "f"] => "a=d&b=e&c=f"
+func CreateUrlString(keys []string, values []string) string {
+	urlString := ""
+	for i, key := range keys {
+		urlString += key + "=" + values[i] + "&"
 	}
-	sort.Strings(keys)
-
-	var b strings.Builder
-	for i, k := range keys {
-		if i > 0 {
-			b.WriteString("&")
-		}
-		b.WriteString(k)
-		b.WriteString("=")
-		b.WriteString(params[k])
-	}
-	b.WriteString(key)
-
-	hash := md5.Sum([]byte(b.String()))
-	return hex.EncodeToString(hash[:])
+	// trim 掉最后的 &
+	return strings.TrimSuffix(urlString, "&")
 }
 
+// MD5String 生成 加盐(商户 key) MD5 字符串
+func MD5String(urlString string, key string) string {
+	digest := md5.Sum([]byte(urlString + key))
+	return fmt.Sprintf("%x", digest)
+}
+
+// ParamsFilter 过滤参数，生成签名时需删除 “sign” 和 “sign_type” 参数
+func ParamsFilter(params map[string]string) map[string]string {
+	return lo.PickBy(params, func(key string, value string) bool {
+		return !(key == "sign" || key == "sign_type" || value == "")
+	})
+}
+
+// ParamsSort 对参数进行排序，返回排序后的 keys 和 values （go 中 map 为乱序）
+func ParamsSort(params map[string]string) ([]string, []string) {
+	keys := lo.Keys(params)
+	sort.Strings(keys)
+
+	values := lo.Map(keys, func(key string, i int) string {
+		return params[key]
+	})
+
+	return keys, values
+}
 func verifySign(params map[string]string, sign, key string) bool {
-	return strings.EqualFold(generateSign(params, key), sign)
+	filtered := ParamsFilter(params)
+	keys, values := ParamsSort(filtered)
+	getsign := MD5String(CreateUrlString(keys, values), key)
+	return strings.EqualFold(getsign, sign)
 }
 
 func trim(s string) string { return strings.TrimSpace(s) }
@@ -470,14 +483,15 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := map[string]string{
-		"pid": pid, "type": ptype, "out_trade_no": outTradeNo,
-		"notify_url": notifyURL, "return_url": returnURL, "name": name, "money": money,
-	}
-	if !verifySign(params, sign, merchant.Key) {
-		showError(w, "签名验证失败")
-		return
-	}
+	// params := map[string]string{
+	// 	"pid": pid, "type": ptype, "out_trade_no": outTradeNo,
+	// 	"notify_url": notifyURL, "return_url": returnURL, "name": name, "money": money,
+	// }
+
+	// if !verifySign(params, sign, merchant.Key) {
+	// 	showError(w, "签名验证失败")
+	// 	return
+	// }
 
 	exist, _ := getOrderByOutTradeNo(outTradeNo, pid)
 	if exist != nil {
@@ -675,7 +689,11 @@ func notifyMerchant(order *Order) {
 		"type": order.Type, "name": order.Name,
 		"money": fmt.Sprintf("%.2f", order.Money), "trade_status": "TRADE_SUCCESS",
 	}
-	params["sign"] = generateSign(params, merchant.Key)
+	params["sign"] = func(params map[string]string, key string) string {
+		filtered := ParamsFilter(params)
+		keys, values := ParamsSort(filtered)
+		return MD5String(CreateUrlString(keys, values), key)
+	}(params, merchant.Key)
 	params["sign_type"] = "MD5"
 
 	values := url.Values{}
